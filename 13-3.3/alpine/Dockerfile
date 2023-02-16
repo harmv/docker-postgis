@@ -120,7 +120,24 @@ FROM postgres:13-alpine3.17
 ENV POSTGIS_VERSION 3.3.2
 ENV POSTGIS_SHA256 2a6858d1df06de1c5f85a5b780773e92f6ba3a5dc09ac31120ac895242f5a77b
 
-COPY --from=builder /usr/local /usr/local
+# Due to docker overlay2 issue: https://github.com/moby/moby/issues/21950
+# Just copying while /usr/local results in spaces wasted the final image
+# workound: specially only copy the new files
+# COPY --from=builder /usr/local /usr/local
+COPY --from=builder /usr/local/bin/pgsql2shp /usr/local/bin
+COPY --from=builder /usr/local/bin/pgtopo_export /usr/local/bin
+COPY --from=builder /usr/local/bin/pgtopo_import /usr/local/bin
+COPY --from=builder /usr/local/bin/raster2pgsql /usr/local/bin
+COPY --from=builder /usr/local/bin/shp2pgsql /usr/local/bin
+COPY --from=builder /usr/local/lib/postgresql/address_standardizer-3.so /usr/local/lib/postgresql
+COPY --from=builder /usr/local/lib/postgresql/bitcode/address_standardizer-3* /usr/local/lib/postgresql/bitcode
+COPY --from=builder /usr/local/lib/postgresql/bitcode/postgis* /usr/local/lib/postgresql/bitcode
+COPY --from=builder /usr/local/lib/postgresql/postgis* /usr/local/lib/postgresql
+COPY --from=builder /usr/local/share/postgresql/contrib/postgis* /usr/local/share/postgresql/contrib
+# copy whole dir (to workaround https://github.com/moby/moby/issues/45015)
+# COPY --from=builder /usr/local/share/postgresql/extension/address_standardizer* /usr/local/share/postgresql/extension
+# COPY --from=builder /usr/local/share/postgresql/extension/postgis* /usr/local/share/postgresql/extension
+COPY --from=builder /usr/local/share/postgresql/extension /usr/local/share/postgresql/extension
 
 RUN set -eux \
     \
